@@ -1,0 +1,27 @@
+#!/usr/bin/python
+
+import sys, os, subprocess, linecache
+from termcolor import colored, cprint
+import eix_pkg
+
+global pkg_name
+
+pkg_name = sys.argv[1]
+file_name = '/etc/portage/profile/package.provided'
+
+pkg_full_name = []
+pkg_full_name.append(eix_pkg.pfn(pkg_name) + '-9999\n')
+pprov_list = []
+with open(file_name, 'r') as pprov_file:
+  pprov_line = pprov_file.readline()
+  while pprov_line:
+    pprov_list.append(pprov_line)
+    pprov_line = pprov_file.readline()
+new_pprov_list = [e for e in pprov_list if not(e in pkg_full_name)]
+with open(file_name, 'w') as new_pprov_file:
+  len_npl = len(new_pprov_list)
+  while len_npl > 0:
+    len_npl = len_npl - 1
+    new_pprov_file.write(new_pprov_list[len_npl])
+    
+    

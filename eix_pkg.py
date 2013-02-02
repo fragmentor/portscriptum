@@ -21,8 +21,7 @@ def pfn(pkg_name):
     if eix_pfn_file_lines > 1:
       print(colored('Too many results:', 'yellow'))
       while eix_pfn_file_lines > 1:
-        pkg_full_name_raw = eix_pfn_file.readline()
-        print(pkg_full_name_raw.rstrip())
+        print(eix_pfn_file.readline().rstrip())
         eix_pfn_file_lines = eix_pfn_file_lines - 1
       print(colored('Please, add package category to request', 'yellow'))
       eix_pfn_file.close

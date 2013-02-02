@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-import sys, os, subprocess, linecache
+import sys, os, subprocess
 from termcolor import colored, cprint
-import eix_pkg, cong
+import eix_pkg
 
 global file_name
 global pkg_name
@@ -12,7 +12,8 @@ pkg_pver_inst = ''
 pkg_name = sys.argv[1]
 file_name = '/etc/portage/profile/package.provided'
 
-def rec():
+
+def rec():  
   pkg_full_name = eix_pkg.pfn(pkg_name)
   pkg_pver_inst = eix_pkg.pver_inst(pkg_name)
   pprov = open(file_name, 'a')
@@ -21,20 +22,40 @@ def rec():
   print(colored(pkg_full_name.rstrip() + ' was frozen on version ' + pkg_pver_inst, 'green'))
 
 def sovpad():
+  import cong
   sovp_isnt = cong.sovp(file_name, pkg_name)
   if sovp_isnt != 0:
     pkg_pver_inst = eix_pkg.pver_inst(pkg_name)
     print(colored('This package is already frozen on version ' + pkg_pver_inst, 'yellow'))
     sys.exit(1)
-
+    
+def list_frz():
+  #frz_list_raw = open('/tmp/frz_list_raw', 'w')
+  frz_list_raw=[]
+  with open(file_name, 'r') as pprov:
+    pprov_line_raw = pprov.readline()
+    while pprov_line_raw:
+      pkg_name = pprov_line_raw[:-6]
+      pkg_pver_inst = eix_pkg.pver_inst(pkg_name)
+      frz_list_raw.append(pkg_name + '-' + pkg_pver_inst + '\n')
+      pprov_line_raw = pprov.readline()
+  #pprov.close
+  #with open('/tmp/frz_list_raw', 'r') as frz_list_raw:
+  print(colored('Frozen packages:', 'green'))
+  print(''.join(sorted(frz_list_raw)), end='')
+  #os.remove('/tmp/frz_list_raw')
+          
 if len(sys.argv) == 1:
   print("Null argument", file=sys.stderr)
   sys.exit(1)
 else:
   if os.path.isdir('/etc/portage/profile'):
     if os.path.isfile(file_name):
-      sovpad()
-      rec()
+      if sys.argv[1] == 'list':
+        list_frz()
+      else:
+        sovpad()
+        rec()
     else:
       print('List of freezed packages not found')
       open(file_name, 'w')
