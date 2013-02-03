@@ -2,21 +2,36 @@
 
 import sys, os, subprocess, linecache
 from termcolor import colored, cprint
-import eix_pkg
+import eix_pkg, cong
 
 global pkg_name
 
-pkg_name = sys.argv[1]
+arg_list = []
+pkg_full_name = []
+pprov_list = []
+pkg_name = ''
 file_name = '/etc/portage/profile/package.provided'
 
-pkg_full_name = []
-pkg_full_name.append(eix_pkg.pfn(pkg_name) + '-9999\n')
-pprov_list = []
-with open(file_name, 'r') as pprov_file:
-  pprov_line = pprov_file.readline()
-  while pprov_line:
-    pprov_list.append(pprov_line)
-    pprov_line = pprov_file.readline()
+index = 1
+while index != len(sys.argv):
+  arg_list.append(sys.argv[index])
+  index = index + 1
+
+index_list = 0
+while index_list != len(arg_list):
+  pkg_name = arg_list[index_list]
+  if cong.sovp(file_name, pkg_name) > 0:
+    pkg_full_name.append(eix_pkg.pfn(pkg_name) + '-9999\n')
+    with open(file_name, 'r') as pprov_file:
+      pprov_line = pprov_file.readline()
+      while pprov_line:
+        pprov_list.append(pprov_line)
+        pprov_line = pprov_file.readline()
+        #print(colored(eix_pkg.pfn(pkg_name) + ' was unrozen', 'green'))
+    index_list = index_list + 1
+  else:
+    print(colored(eix_pkg.pfn(pkg_name) + ' is not frozen', 'yellow'))
+    index_list = index_list + 1
 new_pprov_list = [e for e in pprov_list if not(e in pkg_full_name)]
 with open(file_name, 'w') as new_pprov_file:
   len_npl = len(new_pprov_list)

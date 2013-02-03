@@ -1,34 +1,41 @@
 #!/usr/bin/python
 
-import sys, os, subprocess
+import sys, os
 from termcolor import colored, cprint
-import eix_pkg
+import eix_pkg, cong
 
 global file_name
-global pkg_name
 global sovp_count
 global pkg_pver_inst
+global pkg_name
 pkg_pver_inst = ''
-pkg_name = sys.argv[1]
+arg_list = []
+pkg_name = ''
 file_name = '/etc/portage/profile/package.provided'
 
+index = 1
+while index != len(sys.argv):
+  arg_list.append(sys.argv[index])
+  index = index + 1
 
-def rec():  
+def rec(pkg_name):
+  pprov = open(file_name, 'a')
   pkg_full_name = eix_pkg.pfn(pkg_name)
   pkg_pver_inst = eix_pkg.pver_inst(pkg_name)
-  pprov = open(file_name, 'a')
   pprov.write(pkg_full_name + '-9999\n')
-  pprov.close
   print(colored(pkg_full_name.rstrip() + ' was frozen on version ' + pkg_pver_inst, 'green'))
+  pprov.close
 
-def sovpad():
-  import cong
-  sovp_isnt = cong.sovp(file_name, pkg_name)
-  if sovp_isnt != 0:
-    pkg_pver_inst = eix_pkg.pver_inst(pkg_name)
-    print(colored('This package is already frozen on version ' + pkg_pver_inst, 'yellow'))
-    sys.exit(1)
-    
+#def sovpad(pkg_name):
+#  import cong
+#  sovp_isnt = cong.sovp(file_name, pkg_name)
+#  if sovp_isnt != 0:
+#    pkg_full_name = eix_pkg.pfn(pkg_name)
+#    pkg_pver_inst = eix_pkg.pver_inst(pkg_name)
+#    print(colored(pkg_full_name.rstrip() + ' package is already frozen on version ' + pkg_pver_inst, 'yellow'))
+#    return 1
+
+        
 def list_frz():
   #frz_list_raw = open('/tmp/frz_list_raw', 'w')
   frz_list_raw=[]
@@ -45,28 +52,46 @@ def list_frz():
   print(''.join(sorted(frz_list_raw)), end='')
   #os.remove('/tmp/frz_list_raw')
           
-if len(sys.argv) == 1:
+if len(arg_list) == 0:
   print("Null argument", file=sys.stderr)
   sys.exit(1)
 else:
   if os.path.isdir('/etc/portage/profile'):
     if os.path.isfile(file_name):
-      if sys.argv[1] == 'list':
+      if arg_list[0] == 'list':
         list_frz()
       else:
-        sovpad()
-        rec()
+        index_list = 0
+        while index_list != len(arg_list):
+          pkg_name = arg_list[index_list]
+          if cong.sovp(file_name, pkg_name) > 0:
+            pkg_full_name = eix_pkg.pfn(pkg_name)
+            pkg_pver_inst = eix_pkg.pver_inst(pkg_name)
+            print(colored(pkg_full_name.rstrip() + ' package is already frozen on version ' + pkg_pver_inst, 'yellow'))
+            index_list = index_list + 1
+          else:
+            rec(pkg_name)
+            index_list = index_list + 1
     else:
       print('List of freezed packages not found')
-      open(file_name, 'w')
+      file_name_temp = open(file_name, 'w')
       print('List created', 'green')
-      sovpad()
-      rec()
+      file_name_temp.close
+      index_list = 0
+      while index_list != len(arg_list):
+        pkg_name = arg_list[index_list]
+        rec(pkg_name)
+        index_list = index_list + 1
   else:
     print('List of freezed packages not found')
     os.mkdir('/etc/portage/profile')
-    open(file_name, 'w')
+    file_name_temp = open(file_name, 'w')
     print(colored('List created', 'green'))
-    rec()
+    file_name_temp.close
+    index_list = 0
+    while index_list != len(arg_list):
+      pkg_name = arg_list[index_list]
+      rec(pkg_name)
+      index_list = index_list + 1
   
 sys.exit(0)
